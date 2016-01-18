@@ -1,28 +1,39 @@
+/** set parse as alias for decode */
 exports.parse = exports.decode = decode
+/** set stringify as alias for encode */
 exports.stringify = exports.encode = encode
 
 exports.safe = safe
 exports.unsafe = unsafe
 
-/** determine the current operating system */
+/** determine the current operating system , then decide to use appropriate newline character
+ *  if windows, use '\r\n', else use '\n'
+ */
 var eol = process.platform === 'win32' ? '\r\n' : '\n'
 
+/** encoded the obj into an ini-sytle formatted string
+ * @param {object} obj - the object being encoded into an ini-style formatted string
+ * @param {string} [opt] - the optional section, all top-level properties of the object are put into this section and the section-string is prepended to all sub-sections
+ * @param {string} [opt.section=null] - the section string
+ * @param {boolean} [opt.whitespace] - decide whether or not add whitespace around the '=' character
+ */
 function encode (obj, opt) {
   var children = []
   var out = ''
-
+/** check the opt parameter */
   if (typeof opt === 'string') {
     opt = {
       section: opt,
       whitespace: false
     }
   } else {
+    /** if opt is a falsy value(null, undefined or 0), set opt as a empty array */
     opt = opt || {}
     opt.whitespace = opt.whitespace === true
   }
-
+/** if opt.whitespace is true, put whitespace around the '=' character  */
   var separator = opt.whitespace ? ' = ' : '='
-
+/** processing every keywords in the obj */
   Object.keys(obj).forEach(function (k, _, __) {
     var val = obj[k]
     if (val && Array.isArray(val)) {
@@ -35,18 +46,21 @@ function encode (obj, opt) {
       out += safe(k) + separator + safe(val) + eol
     }
   })
-
+/** add opt.section at the beginning of output */
   if (opt.section && out.length) {
     out = '[' + safe(opt.section) + ']' + eol + out
   }
 
   children.forEach(function (k, _, __) {
+    /** split k by dot and transfer splitted k into an array,
+     *  then transfer the array back into a string of all array elements are splitted by '\\.' */
     var nk = dotSplit(k).join('\\.')
     var section = (opt.section ? opt.section + '.' : '') + nk
     var child = encode(obj[k], {
       section: section,
       whitespace: opt.whitespace
     })
+    /** split out and child into two lines */
     if (out.length && child.length) {
       out += eol
     }
