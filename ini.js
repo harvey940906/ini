@@ -4,6 +4,7 @@ exports.stringify = exports.encode = encode
 exports.safe = safe
 exports.unsafe = unsafe
 
+/** determine the current operating system */
 var eol = process.platform === 'win32' ? '\r\n' : '\n'
 
 function encode (obj, opt) {
