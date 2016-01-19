@@ -114,11 +114,19 @@ function decode (str) {
     if (!match) return
     if (match[1] !== undefined) {
       section = unsafe(match[1])
+      /** this line put section into out, and set cur as current section */
       cur = out[section] = out[section] || {}
       return
     }
     var key = unsafe(match[2])
+    /** match[3] >> '= value', match[4] >> 'value' */
     var value = match[3] ? unsafe((match[4] || '')) : true
+    
+    console.log('zero')
+    console.log(match[2])
+    console.log(match[3])
+    console.log(match[4])
+    
     switch (value) {
       case 'true':
       case 'false':
@@ -152,7 +160,7 @@ function decode (str) {
     }
   })
   
-    console.log('third')
+    console.log('before del')
     console.log(cur)
     console.log(out)
     
@@ -177,24 +185,27 @@ function decode (str) {
     console.log(parts)
     
     parts.forEach(function (part, _, __) {
+      
+      console.log('cur:')
+      console.log(cur)
+      console.log('cur[part]')
+      console.log(cur[part])
+      
       if (!cur[part] || typeof cur[part] !== 'object') cur[part] = {}
+      /** get into the current part */
       cur = cur[part]
     })
-    /** 
-     * if out and cur is same and no '\.' in l,
-     * the parent section is an object
-    */
+    
+    console.log("!out")
+    console.log(out)
+    /** this section has no parent section */
     if (cur === out && nl === l) {
       return false
     }
+    /** add the current object to its parent section */
     cur[nl] = out[k]
     return true
-    /** delete redundant objects*/
-    
-    console.log('fourth')
-    console.log(cur) 
-    console.log(out)
-    
+    /** delete redundant objects */
   }).forEach(function (del, _, __) {
     
     console.log('del')
@@ -202,7 +213,8 @@ function decode (str) {
     
     delete out[del]
   })
-
+  console.log('after del')
+  //console.log(out)
   return out
 }
 
