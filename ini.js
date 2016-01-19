@@ -200,7 +200,7 @@ function safe (val) {
 /** 
  * Unescapes the string val
  * remove the beginning and ending single quotes if the string is quoted,
- * otherwise 
+ * otherwise find every semicolons(;) and number sign(#) and unescapes them
  * @param {string} val - the string would be unescaped
  * @return {string} - the string unescaped
  */
