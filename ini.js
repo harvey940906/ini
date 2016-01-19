@@ -37,14 +37,16 @@ function encode (obj, opt) {
   }
 /** if opt.whitespace is true, put whitespace around the '=' character  */
   var separator = opt.whitespace ? ' = ' : '='
-/** processing every keywords in the obj */
+/** processing every keys in the obj */
   Object.keys(obj).forEach(function (k, _, __) {
     var val = obj[k]
     if (val && Array.isArray(val)) {
       val.forEach(function (item) {
+        /** write lines for every elements in an array */
         out += safe(k + '[]') + separator + safe(item) + '\n'
       })
     } else if (val && typeof val === 'object') {
+      /** push objects into children, and process later */
       children.push(k)
     } else {
       out += safe(k) + separator + safe(val) + eol
@@ -57,17 +59,18 @@ function encode (obj, opt) {
 
   children.forEach(function (k, _, __) {
     /** 
-     * split k by setted rules and transfer splitted k into an array,
-     * then transfer the array back into a string of all array elements are splitted by '\\.' 
+     * split child(k) by setted rules and transfer splitted child(k) into an array,
+     * then transfer the array back into a string of all array's elements are splitted by '\\.'
      */
     var nk = dotSplit(k).join('\\.')
     var section = (opt.section ? opt.section + '.' : '') + nk
+    /** encode child with current section and opt.whitespace setting */
     var child = encode(obj[k], {
       section: section,
       whitespace: opt.whitespace
     })
-    /** split out and child into two lines */
     if (out.length && child.length) {
+      /** add a new line for child */
       out += eol
     }
     out += child
@@ -96,22 +99,22 @@ function dotSplit (str) {
  */
 function decode (str) {
   var out = {}
-  var p = out
+  var cur = out
   var section = null
-  /** set the regular expression */
   //          section     |key      = value
   var re = /^\[([^\]]*)\]$|^([^=]+)(=(.*))?$/i
+  /** store every lines in the str into an array */
   var lines = str.split(/[\r\n]+/g)
 
   lines.forEach(function (line, _, __) {
-    /** remove blank lines */
+    /** remove blank lines and lines only has ; or # */
     if (!line || line.match(/^\s*[;#]/)) return
     /** apply the regular expression */
     var match = line.match(re)
     if (!match) return
     if (match[1] !== undefined) {
       section = unsafe(match[1])
-      p = out[section] = out[section] || {}
+      cur = out[section] = out[section] || {}
       return
     }
     var key = unsafe(match[2])
@@ -121,26 +124,38 @@ function decode (str) {
       case 'false':
       case 'null': value = JSON.parse(value)
     }
-
+    
+    console.log('first')
+    console.log(cur)
+    console.log(out)
+    
     // Convert keys with '[]' suffix to an array
     if (key.length > 2 && key.slice(-2) === '[]') {
       key = key.substring(0, key.length - 2)
-      if (!p[key]) {
-        p[key] = []
-      } else if (!Array.isArray(p[key])) {
-        p[key] = [p[key]]
+      if (!cur[key]) {
+        cur[key] = []
+      } else if (!Array.isArray(cur[key])) {
+        cur[key] = [cur[key]]
       }
     }
-
+    
+    console.log('second')
+    console.log(cur)
+    console.log(out)
+    
     // safeguard against resetting a previously defined
     // array by accidentally forgetting the brackets
-    if (Array.isArray(p[key])) {
-      p[key].push(value)
+    if (Array.isArray(cur[key])) {
+      cur[key].push(value)
     } else {
-      p[key] = value
+      cur[key] = value
     }
   })
-
+  
+    console.log('third')
+    console.log(cur)
+    console.log(out)
+    
   // {a:{y:1},"a.b":{x:2}} --> {a:{y:1,b:{x:2}}}
   // use a filter to return the keys that have to be deleted.
   Object.keys(out).filter(function (k, _, __) {
@@ -152,19 +167,39 @@ function decode (str) {
     // see if the parent section is also an object.
     // if so, add it to that, and mark this one for deletion
     var parts = dotSplit(k)
-    var p = out
+    var cur = out
     var l = parts.pop()
     var nl = l.replace(/\\\./g, '.')
+    
+    console.log('nl:')
+    console.log(l)
+    console.log(nl)
+    console.log(parts)
+    
     parts.forEach(function (part, _, __) {
-      if (!p[part] || typeof p[part] !== 'object') p[part] = {}
-      p = p[part]
+      if (!cur[part] || typeof cur[part] !== 'object') cur[part] = {}
+      cur = cur[part]
     })
-    if (p === out && nl === l) {
+    /** 
+     * if out and cur is same and no '\.' in l,
+     * the parent section is an object
+    */
+    if (cur === out && nl === l) {
       return false
     }
-    p[nl] = out[k]
+    cur[nl] = out[k]
     return true
+    /** delete redundant objects*/
+    
+    console.log('fourth')
+    console.log(cur) 
+    console.log(out)
+    
   }).forEach(function (del, _, __) {
+    
+    console.log('del')
+    console.log(out[del])
+    
     delete out[del]
   })
 
@@ -216,18 +251,21 @@ function unsafe (val, doUnesc) {
     // walk the val to find the first not-escaped ; character
     var esc = false
     var unesc = ''
+    /** go through the val with esc checking */
     for (var i = 0, l = val.length; i < l; i++) {
       var c = val.charAt(i)
       if (esc) {
         if ('\\;#'.indexOf(c) !== -1) {
           unesc += c
         } else {
+          /** add a single backslash before current character */
           unesc += '\\' + c
         }
         esc = false
       } else if (';#'.indexOf(c) !== -1) {
         break
       } else if (c === '\\') {
+        /** next character is escape character */
         esc = true
       } else {
         unesc += c
