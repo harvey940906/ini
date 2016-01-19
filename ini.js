@@ -6,16 +6,20 @@ exports.stringify = exports.encode = encode
 exports.safe = safe
 exports.unsafe = unsafe
 
-/** determine the current operating system , then decide to use appropriate newline character
+/** 
+ * determine the current operating system , then decide to use appropriate newline character
  *  if windows, use '\r\n', else use '\n'
  */
 var eol = process.platform === 'win32' ? '\r\n' : '\n'
 
-/** encoded the obj into an ini-sytle formatted string
+/** 
+ * encoded the object into an ini-sytle formatted string
  * @param {object} obj - the object being encoded into an ini-style formatted string
- * @param {string} [opt] - the optional section, all top-level properties of the object are put into this section and the section-string is prepended to all sub-sections
+ * @param {string} [opt] - the optional section, 
+ *  all top-level properties of the object are put into this section and the section-string is prepended to all sub-sections
  * @param {string} [opt.section=null] - the section string
  * @param {boolean} [opt.whitespace] - decide whether or not add whitespace around the '=' character
+ * @return {string} a ini-style formatted string
  */
 function encode (obj, opt) {
   var children = []
@@ -52,8 +56,10 @@ function encode (obj, opt) {
   }
 
   children.forEach(function (k, _, __) {
-    /** split k by dot and transfer splitted k into an array,
-     *  then transfer the array back into a string of all array elements are splitted by '\\.' */
+    /** 
+     * split k by setted rules and transfer splitted k into an array,
+     * then transfer the array back into a string of all array elements are splitted by '\\.' 
+     */
     var nk = dotSplit(k).join('\\.')
     var section = (opt.section ? opt.section + '.' : '') + nk
     var child = encode(obj[k], {
@@ -70,6 +76,10 @@ function encode (obj, opt) {
   return out
 }
 
+/** 
+ * @param {string} str - the string would be processed
+ * @return {string} the string processed
+ */
 function dotSplit (str) {
   return str.replace(/\1/g, '\u0002LITERAL\\1LITERAL\u0002')
     .replace(/\\\./g, '\u0001')
@@ -79,16 +89,24 @@ function dotSplit (str) {
   })
 }
 
+/** 
+ * Decode the ini-style formatted string into a nested object.
+ * @param {string} str - the ini-style formatted string
+ * @return {object} a object storing ini information
+ */
 function decode (str) {
   var out = {}
   var p = out
   var section = null
+  /** set the regular expression */
   //          section     |key      = value
   var re = /^\[([^\]]*)\]$|^([^=]+)(=(.*))?$/i
   var lines = str.split(/[\r\n]+/g)
 
   lines.forEach(function (line, _, __) {
+    /** remove blank lines */
     if (!line || line.match(/^\s*[;#]/)) return
+    /** apply the regular expression */
     var match = line.match(re)
     if (!match) return
     if (match[1] !== undefined) {
@@ -153,22 +171,39 @@ function decode (str) {
   return out
 }
 
+/** 
+ * check if a string is quoted by single quotation mark or double quotation marks
+ * @param {string} val - the string would be checked
+ * @return {boolean}
+ */
 function isQuoted (val) {
   return (val.charAt(0) === '"' && val.slice(-1) === '"') ||
     (val.charAt(0) === "'" && val.slice(-1) === "'")
 }
 
+/**
+ * escapes the string val such that it is safe to be used as a key or value in an ini-file
+ * add backslash(\) before every semicolons(;) and number sign(#);
+ * @prarm {string} val - the string would be escaped
+ * @return {string} - the string escaped
+ */
 function safe (val) {
   return (typeof val !== 'string' ||
     val.match(/[=\r\n]/) ||
     val.match(/^\[/) ||
-    (val.length > 1 &&
-     isQuoted(val)) ||
+    (val.length > 1 && isQuoted(val)) ||
     val !== val.trim()) ?
       JSON.stringify(val) :
       val.replace(/;/g, '\\;').replace(/#/g, '\\#')
 }
 
+/** 
+ * Unescapes the string val
+ * remove the beginning and ending single quotes if the string is quoted,
+ * otherwise 
+ * @param {string} val - the string would be unescaped
+ * @return {string} - the string unescaped
+ */
 function unsafe (val, doUnesc) {
   val = (val || '').trim()
   if (isQuoted(val)) {
