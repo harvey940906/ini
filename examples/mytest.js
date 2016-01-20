@@ -13,7 +13,7 @@ console.log('mytest.ini after decode')
 console.log(decode_test)
 console.log()
 
-// you can see the encode result by openning the ini file
+// you can see the encode result by openning the mytest_modified.ini file
 var encode_test = fs.writeFileSync('./mytest_modified.ini', ini.stringify(decode_test, {section: "mySection",whitespace: true}))
 
 
