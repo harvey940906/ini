@@ -122,10 +122,10 @@ function decode (str) {
     /** match[3] >> '= value', match[4] >> 'value' */
     var value = match[3] ? unsafe((match[4] || '')) : true
     
-    console.log('zero')
-    console.log(match[2])
-    console.log(match[3])
-    console.log(match[4])
+   // console.log('zero')
+   // console.log(match[2])
+   // console.log(match[3])
+   // console.log(match[4])
     
     switch (value) {
       case 'true':
@@ -133,9 +133,9 @@ function decode (str) {
       case 'null': value = JSON.parse(value)
     }
     
-    console.log('first')
-    console.log(cur)
-    console.log(out)
+    //console.log('first')
+    //console.log(cur)
+    //console.log(out)
     
     // Convert keys with '[]' suffix to an array
     if (key.length > 2 && key.slice(-2) === '[]') {
@@ -147,9 +147,9 @@ function decode (str) {
       }
     }
     
-    console.log('second')
-    console.log(cur)
-    console.log(out)
+    //console.log('second')
+    //console.log(cur)
+    //console.log(out)
     
     // safeguard against resetting a previously defined
     // array by accidentally forgetting the brackets
@@ -160,9 +160,9 @@ function decode (str) {
     }
   })
   
-    console.log('before del')
-    console.log(cur)
-    console.log(out)
+    //console.log('before del')
+    //console.log(cur)
+    //console.log(out)
     
   // {a:{y:1},"a.b":{x:2}} --> {a:{y:1,b:{x:2}}}
   // use a filter to return the keys that have to be deleted.
@@ -179,25 +179,25 @@ function decode (str) {
     var l = parts.pop()
     var nl = l.replace(/\\\./g, '.')
     
-    console.log('nl:')
-    console.log(l)
-    console.log(nl)
-    console.log(parts)
+    //console.log('nl:')
+    //console.log(l)
+    //console.log(nl)
+    //console.log(parts)
     
     parts.forEach(function (part, _, __) {
       
-      console.log('cur:')
-      console.log(cur)
-      console.log('cur[part]')
-      console.log(cur[part])
+      //console.log('cur:')
+      //console.log(cur)
+      //console.log('cur[part]')
+      //console.log(cur[part])
       
       if (!cur[part] || typeof cur[part] !== 'object') cur[part] = {}
       /** get into the current part */
       cur = cur[part]
     })
     
-    console.log("!out")
-    console.log(out)
+   // console.log("!out")
+   // console.log(out)
     /** this section has no parent section */
     if (cur === out && nl === l) {
       return false
@@ -208,12 +208,12 @@ function decode (str) {
     /** delete redundant objects */
   }).forEach(function (del, _, __) {
     
-    console.log('del')
-    console.log(out[del])
+    //console.log('del')
+    //console.log(out[del])
     
     delete out[del]
   })
-  console.log('after del')
+  //console.log('after del')
   //console.log(out)
   return out
 }
